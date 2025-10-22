@@ -50,10 +50,10 @@ def save_tokens(token_dict):
 def publish_message(message):
     try:
         producer = KafkaProducer(bootstrap_servers=['rp-queue2:29092'],value_serializer=lambda x: dumps(x).encode('utf-8'))
-        producer.send(str(TOPIC_NAME), value=message)
-        log.info(f"MESSAGE {message} sent to {TOPIC_NAME}")
+        producer.send(str(tokenUtils.TOPIC_NAME), value=message)
+        log.info(f"MESSAGE {message} sent to {tokenUtils.TOPIC_NAME}")
     except Exception as e:
-        log.error(f"MESSAGE {message} not sent to {TOPIC_NAME}")
+        log.error(f"MESSAGE {message} not sent to {tokenUtils.TOPIC_NAME}")
         log.error(e)
 
 def main():
