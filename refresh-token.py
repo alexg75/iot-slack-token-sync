@@ -2,27 +2,42 @@ import logger
 import json
 from json import dumps
 from kafka import KafkaProducer
-
-log = logger.setup_logger("refresh_token")
+import tokenUtils
+import requests
 
 ACCESS_TOKEN = "access_token"
 REFRESH_TOKEN = "refresh_token"
-TOKEN_FILE = "/token.json"
-TOPIC_NAME = 'slack-token'
+TOKEN_FILE = "./token.json"
 
-def load_stored_token():
-    token_dict = {}
-    try:        
-        json_file = open(TOKEN_FILE, "r")        
-        token_dict = json.load(json_file)
-        log.info(f"TOKEN LOADED: {token_dict}")
-    except Exception as e:
-        log.error("Could not load stored token")
-        log.error(e)
-    return token_dict
+log = logger.setup_logger("refresh_token")
 
 def refresh_bot_token(token_dict):
-    # TODO might need to create a new slack appfor testing
+    log.debug("---------------")
+    log.debug(token_dict)
+    log.debug("---------------")
+
+    url = 'https://slack.com//api/oauth.v2.access'
+    headers = {"Content-type" : "application/x-www-form-urlencoded"}
+    body = {
+        "client_id": "30747277668.8197721338480",
+        "client_secret":"4d14328e252b2b9f1fe21fd30e816cc7",
+        "grant_type":"refresh_token",
+        # "refresh_token":token_dict[REFRESH_TOKEN]
+        "refresh_token":token_dict["refresh_token"]
+    }
+
+    response = requests.post(url, headers=headers, data=body).text
+    response = json.loads(response)
+    log.debug("SLACK RESPONSE")
+    log.debug(response)
+
+    if (response["ok"] == True):
+        token_dict[REFRESH_TOKEN]=response[REFRESH_TOKEN]
+        token_dict[ACCESS_TOKEN]=response[ACCESS_TOKEN]
+    else:
+        error_message = response["error"]
+        log.error(f"Cound not refresh token: {error_message}")
+
     return token_dict
 
 def save_tokens(token_dict):
@@ -42,9 +57,9 @@ def publish_message(message):
         log.error(e)
 
 def main():
-    token_dict = load_stored_token()
+    token_dict = tokenUtils.load_stored_token()
     token_dict = refresh_bot_token(token_dict)
-    save_tokens(token_dict)
+    tokenUtils.save_tokens(token_dict)
     publish_message(token_dict)
 
 main()

@@ -4,7 +4,7 @@ __pycache__/
 *$py.class
 
 OLD_refresh-token/py
-
+token.json
 
 # C extensions
 *.so
